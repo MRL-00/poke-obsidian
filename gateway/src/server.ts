@@ -43,6 +43,7 @@ app.use("/mcp", requireMcpToken);
 
 app.post("/mcp", async (req: Request, res: Response) => {
 	const userId = getPokeUserId(req);
+	console.log(`MCP request: user=${userId} method=${getMcpMethod(req.body)} connectedPlugins=${store.getStats().connectedPlugins}`);
 	const server = createPokeObsidianMcpServer(store, rpc, {
 		userId,
 		routeSingleConnectedPlugin: config.routeSingleConnectedPlugin,
@@ -163,4 +164,12 @@ function toWebSocketBaseUrl(publicBaseUrl: string): string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function getMcpMethod(body: unknown): string {
+	if (!isRecord(body)) {
+		return "(unknown)";
+	}
+
+	return typeof body.method === "string" ? body.method : "(unknown)";
 }
