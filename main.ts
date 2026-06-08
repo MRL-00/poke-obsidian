@@ -132,6 +132,7 @@ export default class PokeObsidianPlugin extends Plugin {
 		url.searchParams.set("version", this.manifest.version);
 
 		try {
+			console.log(`Poke-Obsidian connecting to ${redactToken(url)}`);
 			this.socket = new WebSocket(url.toString());
 		} catch (error) {
 			this.handleConnectionError(error);
@@ -140,6 +141,7 @@ export default class PokeObsidianPlugin extends Plugin {
 		}
 
 		this.socket.onopen = () => {
+			console.log("Poke-Obsidian connected");
 			this.reconnectAttempts = 0;
 			this.setConnectionState("connected");
 		};
@@ -148,11 +150,12 @@ export default class PokeObsidianPlugin extends Plugin {
 			void this.withRequestTimeout(this.handleSocketMessage(event.data), null);
 		};
 
-		this.socket.onerror = () => {
-			this.handleConnectionError(new Error("WebSocket connection error"));
+		this.socket.onerror = (event) => {
+			this.handleConnectionError(new Error(`WebSocket connection error: ${JSON.stringify(event)}`));
 		};
 
-		this.socket.onclose = () => {
+		this.socket.onclose = (event) => {
+			console.log(`Poke-Obsidian disconnected: code=${event.code} reason=${event.reason || "(none)"}`);
 			this.socket = null;
 
 			if (this.unloadRequested) {
@@ -511,4 +514,14 @@ function makeSnippet(content: string, index: number, matchLength: number): strin
 
 function capitalize(value: string): string {
 	return value.charAt(0).toLocaleUpperCase() + value.slice(1);
+}
+
+function redactToken(url: URL): string {
+	const copy = new URL(url.toString());
+
+	if (copy.searchParams.has("token")) {
+		copy.searchParams.set("token", "***");
+	}
+
+	return copy.toString();
 }
