@@ -37,12 +37,14 @@ Authentication: API Key required
 
 If Poke asks for an API key while creating the template, paste your own current Obsidian-generated connection token. This is only for Poke's connection test and is not stored on the template.
 
-The Recipe onboarding should tell users to install the plugin, copy the generated connection token from Settings -> Poke Gateway, and paste that token into the Poke Obsidian Add Key field.
+The Recipe onboarding should tell users that the plugin is not yet in Obsidian's community plugin directory. Users should install it manually from the GitHub release by downloading `manifest.json`, `main.js`, and `styles.css`, putting them in `.obsidian/plugins/poke-gateway`, enabling `Poke Gateway`, copying the generated connection token from Settings -> Poke Gateway, and pasting that token into the Poke Obsidian Add Key field.
 
 ## User Flow
 
-1. User installs and enables the Poke Gateway plugin in Obsidian.
-2. Plugin generates a per-vault connection token and connects to the gateway.
-3. User adds the Poke Recipe.
-4. User pastes the Obsidian connection token into Poke's Add Key field.
-5. Poke uses that token as the MCP API key and can call the vault tools.
+1. User downloads the Obsidian plugin release files from GitHub.
+2. User puts `manifest.json`, `main.js`, and `styles.css` in `.obsidian/plugins/poke-gateway`.
+3. User enables the Poke Gateway plugin in Obsidian.
+4. Plugin generates a per-vault connection token and connects to the gateway.
+5. User adds the Poke Recipe.
+6. User pastes the Obsidian connection token into Poke's Add Key field.
+7. Poke uses that token as the MCP API key and can call the vault tools.
