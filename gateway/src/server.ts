@@ -3,6 +3,7 @@ import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { NextFunction, Request, Response } from "express";
 import { WebSocketServer } from "ws";
+import { createConnectionToken, verifyConnectionToken } from "./connectionToken.js";
 import { loadConfig } from "./config.js";
 import { createPokeObsidianMcpServer } from "./mcpServer.js";
 import { PluginRpc } from "./pluginRpc.js";
@@ -61,6 +62,8 @@ async function handleMcpPost(req: Request, res: Response): Promise<void> {
 	const server = createPokeObsidianMcpServer(store, rpc, {
 		userId,
 		routeSingleConnectedPlugin: config.routeSingleConnectedPlugin,
+		pluginWebSocketUrl: `${toWebSocketBaseUrl(config.publicBaseUrl)}/obsidian/sync`,
+		createConnectionToken: createPluginConnection,
 	});
 	const transport = new StreamableHTTPServerTransport({
 		sessionIdGenerator: undefined,
@@ -106,6 +109,10 @@ webSocketServer.on("connection", (socket, request) => {
 	const token = url.searchParams.get("token") ?? "";
 	const pluginId = url.searchParams.get("plugin") ?? "unknown";
 	const version = url.searchParams.get("version") ?? "unknown";
+	const verifiedConnectionToken =
+		config.connectionTokenSecret && token
+			? verifyConnectionToken(config.connectionTokenSecret, token)
+			: null;
 	const pairingToken =
 		config.devConnectionToken && token === config.devConnectionToken
 			? {
@@ -114,6 +121,13 @@ webSocketServer.on("connection", (socket, request) => {
 					createdAt: Date.now(),
 					expiresAt: Number.MAX_SAFE_INTEGER,
 				}
+			: verifiedConnectionToken
+				? {
+						token,
+						userId: verifiedConnectionToken.userId,
+						createdAt: verifiedConnectionToken.issuedAt,
+						expiresAt: Number.MAX_SAFE_INTEGER,
+					}
 			: store.getPairingToken(token);
 
 	if (!pairingToken) {
@@ -142,6 +156,22 @@ httpServer.listen(config.port, () => {
 
 function requireMcpToken(req: Request, res: Response, next: NextFunction): void {
 	requireBearerToken(config.mcpServerToken, req, res, next);
+}
+
+function createPluginConnection(userId: string): { token: string; expiresAt: string | null } {
+	if (config.connectionTokenSecret) {
+		return {
+			token: createConnectionToken(config.connectionTokenSecret, userId),
+			expiresAt: null,
+		};
+	}
+
+	const pairingToken = store.createPairingToken(userId);
+
+	return {
+		token: pairingToken.token,
+		expiresAt: new Date(pairingToken.expiresAt).toISOString(),
+	};
 }
 
 function requireAdminToken(req: Request, res: Response, next: NextFunction): void {

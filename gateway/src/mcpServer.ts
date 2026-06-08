@@ -6,6 +6,11 @@ import type { SessionStore } from "./sessionStore.js";
 export interface McpContext {
 	userId: string;
 	routeSingleConnectedPlugin: boolean;
+	pluginWebSocketUrl: string;
+	createConnectionToken: (userId: string) => {
+		token: string;
+		expiresAt: string | null;
+	};
 }
 
 export function createPokeObsidianMcpServer(store: SessionStore, rpc: PluginRpc, context: McpContext): McpServer {
@@ -13,6 +18,29 @@ export function createPokeObsidianMcpServer(store: SessionStore, rpc: PluginRpc,
 		name: "poke-obsidian-gateway",
 		version: "0.1.0",
 	});
+
+	server.registerTool(
+		"obsidian_create_connection_token",
+		{
+			description: "Create a connection token and gateway URL for pairing the current Poke user with the Poke-Obsidian plugin.",
+			inputSchema: {},
+		},
+		async () => {
+			const connection = context.createConnectionToken(context.userId);
+
+			return toJsonToolResult({
+				connectionToken: connection.token,
+				gatewayUrl: context.pluginWebSocketUrl,
+				expiresAt: connection.expiresAt,
+				instructions: [
+					"Install and enable the Poke-Obsidian community plugin in Obsidian.",
+					"Open Obsidian Settings, then Poke-Obsidian.",
+					"Paste the Gateway URL and Connection token.",
+					"Wait for the status to show Connected.",
+				],
+			});
+		}
+	);
 
 	server.registerTool(
 		"obsidian_status",

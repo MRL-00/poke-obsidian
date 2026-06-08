@@ -126,10 +126,12 @@ export default class PokeObsidianPlugin extends Plugin {
 
 		this.setConnectionState("connecting");
 
-		const url = new URL(this.settings.gatewayUrl || DEFAULT_GATEWAY_URL);
-		url.searchParams.set("token", this.settings.connectionToken);
-		url.searchParams.set("plugin", this.manifest.id);
-		url.searchParams.set("version", this.manifest.version);
+		const url = this.buildGatewayUrl();
+
+		if (!url) {
+			this.setConnectionState("disconnected");
+			return;
+		}
 
 		try {
 			console.log(`Poke-Obsidian connecting to ${redactToken(url)}`);
@@ -312,6 +314,7 @@ export default class PokeObsidianPlugin extends Plugin {
 		const content = getRequiredString(params, "content");
 		const normalizedPath = this.normalizeMarkdownPath(path);
 
+		await this.ensureParentFolders(normalizedPath);
 		await this.app.vault.adapter.write(normalizedPath, content);
 
 		return {
@@ -380,6 +383,41 @@ export default class PokeObsidianPlugin extends Plugin {
 		}
 
 		return parts.join("/");
+	}
+
+	private async ensureParentFolders(filePath: string): Promise<void> {
+		const parentParts = filePath.split("/").slice(0, -1);
+		let currentPath = "";
+
+		for (const part of parentParts) {
+			currentPath = currentPath ? `${currentPath}/${part}` : part;
+
+			if (!(await this.app.vault.adapter.exists(currentPath))) {
+				await this.app.vault.adapter.mkdir(currentPath);
+			}
+		}
+	}
+
+	private buildGatewayUrl(): URL | null {
+		let url: URL;
+
+		try {
+			url = new URL(this.settings.gatewayUrl || DEFAULT_GATEWAY_URL);
+		} catch {
+			new Notice("Invalid Poke-Obsidian gateway URL");
+			return null;
+		}
+
+		if (url.protocol !== "ws:" && url.protocol !== "wss:") {
+			new Notice("Poke-Obsidian gateway URL must start with ws:// or wss://");
+			return null;
+		}
+
+		url.searchParams.set("token", this.settings.connectionToken);
+		url.searchParams.set("plugin", this.manifest.id);
+		url.searchParams.set("version", this.manifest.version);
+
+		return url;
 	}
 
 	private sendResponse(response: ResponseMessage): void {
