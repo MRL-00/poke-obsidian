@@ -5,6 +5,7 @@ import type { SessionStore } from "./sessionStore.js";
 
 export interface McpContext {
 	userId: string;
+	routeSingleConnectedPlugin: boolean;
 }
 
 export function createPokeObsidianMcpServer(store: SessionStore, rpc: PluginRpc, context: McpContext): McpServer {
@@ -20,11 +21,14 @@ export function createPokeObsidianMcpServer(store: SessionStore, rpc: PluginRpc,
 			inputSchema: {},
 		},
 		async () => {
-			const session = store.getSession(context.userId);
+			const directSession = store.getSession(context.userId);
+			const session = resolveSession(store, context);
 
 			return toJsonToolResult({
-				connected: Boolean(session),
+				connected: Boolean(resolveSession(store, context)),
 				userId: context.userId,
+				routedUserId: session?.userId ?? null,
+				usedSinglePluginFallback: Boolean(!directSession && session),
 				connectedAt: session ? new Date(session.connectedAt).toISOString() : null,
 				pluginId: session?.pluginId ?? null,
 				version: session?.version ?? null,
@@ -38,7 +42,7 @@ export function createPokeObsidianMcpServer(store: SessionStore, rpc: PluginRpc,
 			description: "List all markdown file paths in the connected user's Obsidian vault.",
 			inputSchema: {},
 		},
-		async () => toJsonToolResult(await callPlugin(store, rpc, context.userId, "list_files", {}))
+		async () => toJsonToolResult(await callPlugin(store, rpc, context, "list_files", {}))
 	);
 
 	server.registerTool(
@@ -49,7 +53,7 @@ export function createPokeObsidianMcpServer(store: SessionStore, rpc: PluginRpc,
 				path: z.string().describe("Vault-relative markdown path, for example Projects/Plan.md."),
 			},
 		},
-		async ({ path }) => toJsonToolResult(await callPlugin(store, rpc, context.userId, "read_file", { path }))
+		async ({ path }) => toJsonToolResult(await callPlugin(store, rpc, context, "read_file", { path }))
 	);
 
 	server.registerTool(
@@ -60,7 +64,7 @@ export function createPokeObsidianMcpServer(store: SessionStore, rpc: PluginRpc,
 				query: z.string().describe("Text to search for."),
 			},
 		},
-		async ({ query }) => toJsonToolResult(await callPlugin(store, rpc, context.userId, "search_vault", { query }))
+		async ({ query }) => toJsonToolResult(await callPlugin(store, rpc, context, "search_vault", { query }))
 	);
 
 	server.registerTool(
@@ -72,7 +76,7 @@ export function createPokeObsidianMcpServer(store: SessionStore, rpc: PluginRpc,
 				content: z.string().describe("Complete markdown content to write."),
 			},
 		},
-		async ({ path, content }) => toJsonToolResult(await callPlugin(store, rpc, context.userId, "write_file", { path, content }))
+		async ({ path, content }) => toJsonToolResult(await callPlugin(store, rpc, context, "write_file", { path, content }))
 	);
 
 	return server;
@@ -81,17 +85,21 @@ export function createPokeObsidianMcpServer(store: SessionStore, rpc: PluginRpc,
 async function callPlugin(
 	store: SessionStore,
 	rpc: PluginRpc,
-	userId: string,
+	context: McpContext,
 	action: "list_files" | "read_file" | "write_file" | "search_vault",
 	params: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-	const session = store.getSession(userId);
+	const session = resolveSession(store, context);
 
 	if (!session) {
 		throw new Error("No Obsidian vault is connected for this Poke user");
 	}
 
 	return rpc.call(session.socket, action, params);
+}
+
+function resolveSession(store: SessionStore, context: McpContext) {
+	return store.getSession(context.userId) ?? (context.routeSingleConnectedPlugin ? store.getSingleSession() : null);
 }
 
 function toJsonToolResult(value: unknown) {

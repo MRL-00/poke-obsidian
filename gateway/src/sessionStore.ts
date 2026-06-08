@@ -64,6 +64,14 @@ export class SessionStore {
 		return this.sessionsByUserId.get(userId) ?? null;
 	}
 
+	getSingleSession(): PluginSession | null {
+		if (this.sessionsByUserId.size !== 1) {
+			return null;
+		}
+
+		return [...this.sessionsByUserId.values()][0] ?? null;
+	}
+
 	getStats(): Record<string, unknown> {
 		this.pruneExpiredTokens();
 

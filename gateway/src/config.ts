@@ -8,6 +8,7 @@ export interface Config {
 	adminToken: string;
 	pairingTokenTtlMs: number;
 	pluginRequestTimeoutMs: number;
+	routeSingleConnectedPlugin: boolean;
 }
 
 export function loadConfig(): Config {
@@ -20,6 +21,7 @@ export function loadConfig(): Config {
 		adminToken: readString("GATEWAY_ADMIN_TOKEN", ""),
 		pairingTokenTtlMs: readNumber("PAIRING_TOKEN_TTL_MS", 600_000),
 		pluginRequestTimeoutMs: readNumber("PLUGIN_REQUEST_TIMEOUT_MS", 30_000),
+		routeSingleConnectedPlugin: readBoolean("ROUTE_SINGLE_CONNECTED_PLUGIN", false),
 	};
 }
 
@@ -59,4 +61,14 @@ function readString(name: string, fallback: string): string {
 function readNumber(name: string, fallback: number): number {
 	const value = Number(process.env[name]);
 	return Number.isFinite(value) ? value : fallback;
+}
+
+function readBoolean(name: string, fallback: boolean): boolean {
+	const value = process.env[name]?.trim().toLowerCase();
+
+	if (!value) {
+		return fallback;
+	}
+
+	return ["1", "true", "yes", "on"].includes(value);
 }

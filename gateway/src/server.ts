@@ -43,7 +43,10 @@ app.use("/mcp", requireMcpToken);
 
 app.post("/mcp", async (req: Request, res: Response) => {
 	const userId = getPokeUserId(req);
-	const server = createPokeObsidianMcpServer(store, rpc, { userId });
+	const server = createPokeObsidianMcpServer(store, rpc, {
+		userId,
+		routeSingleConnectedPlugin: config.routeSingleConnectedPlugin,
+	});
 	const transport = new StreamableHTTPServerTransport({
 		sessionIdGenerator: undefined,
 	});
