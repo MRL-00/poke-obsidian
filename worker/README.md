@@ -35,6 +35,8 @@ URL: https://obsidian.matt-nz.com/mcp
 Authentication: API Key required
 ```
 
+If Poke asks for an API key while creating the template, paste your own current Obsidian-generated connection token. This is only for Poke's connection test and is not stored on the template.
+
 The Recipe onboarding should tell users to install the plugin, copy the generated connection token from Settings -> Poke Gateway, and paste that token into the Poke Obsidian Add Key field.
 
 ## User Flow

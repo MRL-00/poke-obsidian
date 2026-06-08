@@ -82,6 +82,8 @@ Server URL: https://obsidian.matt-nz.com/mcp
 Authentication: API key required
 ```
 
+When creating the template, Poke may ask for an API key to test the connection. Use your own current Obsidian `Connection token` for that test. Poke says this value is used only for connection testing and is not stored on the template.
+
 Then create a Poke Recipe that uses that integration.
 
 Recipe context should say:
