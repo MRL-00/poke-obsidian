@@ -15,6 +15,12 @@ pnpm install
 pnpm deploy
 ```
 
+The current production endpoint is:
+
+```text
+https://obsidian.matt-nz.com/mcp
+```
+
 Set production secrets:
 
 ```bash
@@ -27,7 +33,8 @@ printf '%s' '<shared-secret-configured-in-poke>' | pnpm exec wrangler secret put
 Create a Poke MCP integration with:
 
 ```text
-URL: https://<your-worker-url>/mcp
+Name: Obsidian
+URL: https://obsidian.matt-nz.com/mcp
 API key: <same value as MCP_SERVER_TOKEN>
 ```
 

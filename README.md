@@ -7,7 +7,7 @@ An Obsidian plugin that connects a local vault to Poke over a secure outbound We
 The plugin connects to a Poke-Obsidian gateway over WebSocket:
 
 ```text
-wss://api.poke.com/obsidian/sync
+wss://obsidian.matt-nz.com/obsidian/sync
 ```
 
 It supports these gateway actions:
@@ -62,7 +62,13 @@ Then enable `Poke-Obsidian` in Obsidian community plugin settings.
 
 ## Gateway
 
-This plugin expects a Poke-compatible gateway at `wss://api.poke.com/obsidian/sync`. The gateway is responsible for issuing pairing tokens, accepting outbound plugin connections, and routing Poke MCP tool calls to the connected vault.
+This plugin expects a Poke-compatible gateway at `wss://obsidian.matt-nz.com/obsidian/sync`. The gateway is responsible for issuing pairing tokens, accepting outbound plugin connections, and routing Poke MCP tool calls to the connected vault.
+
+The hosted MCP endpoint is:
+
+```text
+https://obsidian.matt-nz.com/mcp
+```
 
 A development gateway implementation lives in [`gateway/`](gateway/). It exposes the MCP endpoint for Poke and the WebSocket endpoint for connected plugins.
 
