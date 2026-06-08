@@ -1,6 +1,6 @@
 import { App, Notice, Plugin, PluginSettingTab, Setting, TFile } from "obsidian";
 
-const GATEWAY_URL = "wss://api.poke.com/obsidian/sync";
+const DEFAULT_GATEWAY_URL = "wss://api.poke.com/obsidian/sync";
 const BASE_RECONNECT_DELAY_MS = 1_000;
 const MAX_RECONNECT_DELAY_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -9,6 +9,7 @@ const MAX_SNIPPET_LENGTH = 180;
 type ConnectionState = "connected" | "connecting" | "disconnected";
 
 interface PokeObsidianSettings {
+	gatewayUrl: string;
 	connectionToken: string;
 	allowWrite: boolean;
 }
@@ -31,6 +32,7 @@ interface SearchMatch {
 }
 
 const DEFAULT_SETTINGS: PokeObsidianSettings = {
+	gatewayUrl: DEFAULT_GATEWAY_URL,
 	connectionToken: "",
 	allowWrite: false,
 };
@@ -85,6 +87,12 @@ export default class PokeObsidianPlugin extends Plugin {
 		this.reconnectNow();
 	}
 
+	async updateGatewayUrl(gatewayUrl: string): Promise<void> {
+		this.settings.gatewayUrl = gatewayUrl.trim() || DEFAULT_GATEWAY_URL;
+		await this.saveSettings();
+		this.reconnectNow();
+	}
+
 	async updateAllowWrite(allowWrite: boolean): Promise<void> {
 		this.settings.allowWrite = allowWrite;
 		await this.saveSettings();
@@ -118,7 +126,7 @@ export default class PokeObsidianPlugin extends Plugin {
 
 		this.setConnectionState("connecting");
 
-		const url = new URL(GATEWAY_URL);
+		const url = new URL(this.settings.gatewayUrl || DEFAULT_GATEWAY_URL);
 		url.searchParams.set("token", this.settings.connectionToken);
 		url.searchParams.set("plugin", this.manifest.id);
 		url.searchParams.set("version", this.manifest.version);
@@ -410,6 +418,18 @@ class PokeObsidianSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		containerEl.createEl("h2", { text: "Poke-Obsidian" });
+
+		new Setting(containerEl)
+			.setName("Gateway URL")
+			.setDesc("WebSocket endpoint used to connect this vault to Poke.")
+			.addText((text) => {
+				text
+					.setPlaceholder(DEFAULT_GATEWAY_URL)
+					.setValue(this.plugin.settings.gatewayUrl || DEFAULT_GATEWAY_URL)
+					.onChange(async (value) => {
+						await this.plugin.updateGatewayUrl(value);
+					});
+			});
 
 		new Setting(containerEl)
 			.setName("Connection token")

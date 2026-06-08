@@ -50,3 +50,5 @@ Then enable `Poke-Obsidian` in Obsidian community plugin settings.
 ## Gateway
 
 This plugin expects a Poke-compatible gateway at `wss://api.poke.com/obsidian/sync`. The gateway is responsible for issuing pairing tokens, accepting outbound plugin connections, and routing Poke MCP tool calls to the connected vault.
+
+A development gateway implementation lives in [`gateway/`](gateway/). It exposes the MCP endpoint for Poke and the WebSocket endpoint for connected plugins.
