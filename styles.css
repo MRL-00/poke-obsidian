@@ -1,0 +1,15 @@
+.poke-status {
+	font-weight: 600;
+}
+
+.poke-status.is-connected {
+	color: var(--text-success);
+}
+
+.poke-status.is-connecting {
+	color: var(--text-warning);
+}
+
+.poke-status.is-disconnected {
+	color: var(--text-error);
+}

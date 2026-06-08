@@ -1,0 +1,10 @@
+{
+	"id": "poke-obsidian",
+	"name": "Poke-Obsidian",
+	"version": "0.1.0",
+	"minAppVersion": "1.5.0",
+	"description": "Connects this vault to Poke over a secure outbound WebSocket.",
+	"author": "Poke",
+	"authorUrl": "https://poke.com",
+	"isDesktopOnly": true
+}

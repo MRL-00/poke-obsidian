@@ -1,0 +1,22 @@
+{
+	"name": "poke-obsidian",
+	"version": "0.1.0",
+	"description": "Obsidian plugin that connects a local vault to Poke over an outbound WebSocket.",
+	"main": "main.js",
+	"scripts": {
+		"build": "tsc -skipLibCheck",
+		"dev": "tsc -skipLibCheck --watch"
+	},
+	"keywords": [
+		"obsidian",
+		"plugin",
+		"poke"
+	],
+	"author": "Poke",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/node": "^20.11.30",
+		"obsidian": "^1.5.12",
+		"typescript": "^5.4.2"
+	}
+}
