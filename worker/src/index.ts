@@ -463,16 +463,6 @@ function mcpErrorResponse(
 }
 
 function mcpResponse(request: Request, payload: Record<string, unknown>, status = 200): Response {
-	if (request.headers.get("Accept")?.includes("text/event-stream")) {
-		return new Response(`event: message\ndata: ${JSON.stringify(payload)}\n\n`, {
-			status,
-			headers: {
-				...corsHeaders(),
-				"Content-Type": "text/event-stream",
-			},
-		});
-	}
-
 	return jsonResponse(payload, status);
 }
 
