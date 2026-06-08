@@ -39,9 +39,23 @@ app.post("/pairing-tokens", requireAdminToken, (req: Request, res: Response) => 
 	});
 });
 
-app.use("/mcp", requireMcpToken);
+app.use((req: Request, res: Response, next: NextFunction) => {
+	if (!isMcpPath(req.path)) {
+		next();
+		return;
+	}
 
-app.post("/mcp", async (req: Request, res: Response) => {
+	requireMcpToken(req, res, () => {
+		if (req.method !== "POST") {
+			sendMcpMethodNotAllowed(res);
+			return;
+		}
+
+		void handleMcpPost(req, res);
+	});
+});
+
+async function handleMcpPost(req: Request, res: Response): Promise<void> {
 	const userId = getPokeUserId(req);
 	console.log(`MCP request: user=${userId} method=${getMcpMethod(req.body)} connectedPlugins=${store.getStats().connectedPlugins}`);
 	const server = createPokeObsidianMcpServer(store, rpc, {
@@ -74,9 +88,9 @@ app.post("/mcp", async (req: Request, res: Response) => {
 			});
 		}
 	}
-});
+}
 
-app.get("/mcp", (_req: Request, res: Response) => {
+function sendMcpMethodNotAllowed(res: Response): void {
 	res.status(405).json({
 		jsonrpc: "2.0",
 		error: {
@@ -85,7 +99,7 @@ app.get("/mcp", (_req: Request, res: Response) => {
 		},
 		id: null,
 	});
-});
+}
 
 webSocketServer.on("connection", (socket, request) => {
 	const url = new URL(request.url ?? "", config.publicBaseUrl);
@@ -168,6 +182,10 @@ function toWebSocketBaseUrl(publicBaseUrl: string): string {
 	}
 
 	return publicBaseUrl;
+}
+
+function isMcpPath(path: string): boolean {
+	return path === "/mcp" || path.endsWith("/mcp");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
