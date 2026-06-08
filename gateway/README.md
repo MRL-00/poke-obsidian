@@ -48,3 +48,11 @@ npx poke@latest tunnel http://localhost:3000/mcp -n "Poke-Obsidian Gateway" --re
 Set `MCP_SERVER_TOKEN` to require `Authorization: Bearer <token>` on `/mcp`.
 
 Set `GATEWAY_ADMIN_TOKEN` to require `Authorization: Bearer <token>` on `POST /pairing-tokens`.
+
+## Dev Token Lifetime
+
+Pairing tokens default to 24 hours for development. Override with:
+
+```bash
+PAIRING_TOKEN_TTL_MS=86400000
+```

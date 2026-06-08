@@ -19,7 +19,7 @@ export function loadConfig(): Config {
 		publicBaseUrl: readString("PUBLIC_BASE_URL", "http://localhost:3000").replace(/\/+$/, ""),
 		mcpServerToken: readString("MCP_SERVER_TOKEN", ""),
 		adminToken: readString("GATEWAY_ADMIN_TOKEN", ""),
-		pairingTokenTtlMs: readNumber("PAIRING_TOKEN_TTL_MS", 600_000),
+		pairingTokenTtlMs: readNumber("PAIRING_TOKEN_TTL_MS", 86_400_000),
 		pluginRequestTimeoutMs: readNumber("PLUGIN_REQUEST_TIMEOUT_MS", 30_000),
 		routeSingleConnectedPlugin: readBoolean("ROUTE_SINGLE_CONNECTED_PLUGIN", false),
 	};
