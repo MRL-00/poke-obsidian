@@ -1,4 +1,4 @@
-# Poke-Obsidian Gateway
+# Poke-Obsidian Development Gateway
 
 The gateway exposes:
 
@@ -70,7 +70,7 @@ http://localhost:3001/mcp
 For local Poke recipe testing:
 
 ```bash
-npx poke@latest tunnel http://localhost:3001/mcp -n "Poke-Obsidian Gateway" --recipe
+npx poke@latest tunnel http://localhost:3001/mcp -n "Poke-Obsidian Dev Gateway" --recipe
 ```
 
 ## Auth

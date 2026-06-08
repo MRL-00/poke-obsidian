@@ -30,7 +30,9 @@ printf '%s' '<shared-secret-configured-in-poke>' | pnpm exec wrangler secret put
 
 ## Poke Integration
 
-Create a Poke MCP integration with:
+Only the Recipe owner creates this integration. End users do not create a Poke MCP integration or enter this API key.
+
+Create a shared Poke MCP integration template with:
 
 ```text
 Name: Obsidian

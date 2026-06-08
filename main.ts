@@ -1,6 +1,6 @@
 import { App, Notice, Plugin, PluginSettingTab, Setting, TFile } from "obsidian";
 
-const DEFAULT_GATEWAY_URL = "wss://api.poke.com/obsidian/sync";
+const DEFAULT_GATEWAY_URL = "wss://obsidian.matt-nz.com/obsidian/sync";
 const BASE_RECONNECT_DELAY_MS = 1_000;
 const MAX_RECONNECT_DELAY_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 30_000;
