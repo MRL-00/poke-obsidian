@@ -92,7 +92,15 @@ webSocketServer.on("connection", (socket, request) => {
 	const token = url.searchParams.get("token") ?? "";
 	const pluginId = url.searchParams.get("plugin") ?? "unknown";
 	const version = url.searchParams.get("version") ?? "unknown";
-	const pairingToken = store.getPairingToken(token);
+	const pairingToken =
+		config.devConnectionToken && token === config.devConnectionToken
+			? {
+					token,
+					userId: "dev-user",
+					createdAt: Date.now(),
+					expiresAt: Number.MAX_SAFE_INTEGER,
+				}
+			: store.getPairingToken(token);
 
 	if (!pairingToken) {
 		console.warn(`Rejected Obsidian plugin connection: invalid or expired token (${pluginId}@${version})`);

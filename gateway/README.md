@@ -56,3 +56,11 @@ Pairing tokens default to 24 hours for development. Override with:
 ```bash
 PAIRING_TOKEN_TTL_MS=86400000
 ```
+
+For restart-safe local testing, use the stable development connection token:
+
+```bash
+DEV_CONNECTION_TOKEN=dev-token
+```
+
+Then set the Obsidian plugin connection token to `dev-token`. This bypasses pairing-token expiry and in-memory token loss during gateway restarts.
