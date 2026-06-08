@@ -10,6 +10,8 @@ wss://obsidian.matt-nz.com/obsidian/sync
 
 No inbound ports, tunnels, local web servers, or router changes are required.
 
+This repository contains only the Obsidian plugin source and release assets. The hosted gateway service is maintained separately from the community plugin review package.
+
 ## Setup For Users
 
 You do **not** need to host a server, run a tunnel, create a gateway, or make a Cloudflare account.
