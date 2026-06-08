@@ -5,6 +5,7 @@ const BASE_RECONNECT_DELAY_MS = 1_000;
 const MAX_RECONNECT_DELAY_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_SNIPPET_LENGTH = 180;
+const GENERATED_TOKEN_PREFIX = "pkobs_vault_";
 
 type ConnectionState = "connected" | "connecting" | "disconnected";
 
@@ -50,6 +51,11 @@ export default class PokeObsidianPlugin extends Plugin {
 	async onload(): Promise<void> {
 		await this.loadSettings();
 
+		if (!this.settings.connectionToken) {
+			this.settings.connectionToken = generateConnectionToken();
+			await this.saveSettings();
+		}
+
 		this.statusBarItemEl = this.addStatusBarItem();
 		this.statusBarItemEl.addClass("poke-status");
 		this.setConnectionState("disconnected");
@@ -57,9 +63,7 @@ export default class PokeObsidianPlugin extends Plugin {
 		this.settingsTab = new PokeObsidianSettingTab(this.app, this);
 		this.addSettingTab(this.settingsTab);
 
-		if (this.settings.connectionToken) {
-			this.connect();
-		}
+		this.connect();
 	}
 
 	onunload(): void {
@@ -474,7 +478,7 @@ class PokeObsidianSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Connection token")
-			.setDesc("Pairs this vault with Poke.")
+			.setDesc("Paste this token into Poke's Add Key field for the Obsidian recipe.")
 			.addText((text) => {
 				text
 					.setPlaceholder("Paste token")
@@ -484,6 +488,25 @@ class PokeObsidianSettingTab extends PluginSettingTab {
 					});
 
 				text.inputEl.type = "password";
+			})
+			.addExtraButton((button) => {
+				button
+					.setIcon("copy")
+					.setTooltip("Copy token")
+					.onClick(async () => {
+						await navigator.clipboard.writeText(this.plugin.settings.connectionToken);
+						new Notice("Poke Gateway token copied");
+					});
+			})
+			.addExtraButton((button) => {
+				button
+					.setIcon("refresh-cw")
+					.setTooltip("Generate new token")
+					.onClick(async () => {
+						await this.plugin.updateConnectionToken(generateConnectionToken());
+						this.display();
+						new Notice("Generated a new Poke Gateway token");
+					});
 			});
 
 		new Setting(containerEl)
@@ -552,6 +575,22 @@ function makeSnippet(content: string, index: number, matchLength: number): strin
 
 function capitalize(value: string): string {
 	return value.charAt(0).toLocaleUpperCase() + value.slice(1);
+}
+
+function generateConnectionToken(): string {
+	const bytes = new Uint8Array(32);
+	crypto.getRandomValues(bytes);
+	return `${GENERATED_TOKEN_PREFIX}${toBase64Url(bytes)}`;
+}
+
+function toBase64Url(bytes: Uint8Array): string {
+	let binary = "";
+
+	for (const byte of bytes) {
+		binary += String.fromCharCode(byte);
+	}
+
+	return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
 function redactToken(url: URL): string {

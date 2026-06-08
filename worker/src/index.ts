@@ -27,11 +27,13 @@ interface PendingPluginRequest {
 
 const DEFAULT_PLUGIN_REQUEST_TIMEOUT_MS = 30_000;
 const TOKEN_PREFIX = "pkobs";
+const VAULT_TOKEN_PREFIX = "pkobs_vault_";
+const VAULT_TOKEN_PATTERN = /^pkobs_vault_[A-Za-z0-9_-]{43}$/;
 
 const tools = [
 	{
 		name: "obsidian_create_connection_token",
-		description: "Create a connection token and gateway URL for pairing the current Poke user with the Poke Gateway plugin.",
+		description: "Show setup instructions for connecting the Poke Gateway Obsidian plugin.",
 		inputSchema: { type: "object", properties: {}, additionalProperties: false },
 	},
 	{
@@ -248,15 +250,11 @@ async function handlePluginWebSocket(request: Request, env: Env): Promise<Respon
 		return jsonResponse({ error: "Expected WebSocket upgrade" }, 426);
 	}
 
-	if (!env.CONNECTION_TOKEN_SECRET) {
-		return jsonResponse({ error: "CONNECTION_TOKEN_SECRET is required" }, 500);
-	}
-
 	const url = new URL(request.url);
 	const token = url.searchParams.get("token") ?? "";
-	const verifiedToken = await verifyConnectionToken(env.CONNECTION_TOKEN_SECRET, token);
+	const sessionKey = await getPluginSessionKey(env, token);
 
-	if (!verifiedToken) {
+	if (!sessionKey) {
 		return jsonResponse({ error: "Invalid connection token" }, 401);
 	}
 
@@ -264,7 +262,7 @@ async function handlePluginWebSocket(request: Request, env: Env): Promise<Respon
 	connectUrl.pathname = "/connect";
 	connectUrl.search = "";
 
-	const stub = env.OBSIDIAN_SESSION.get(env.OBSIDIAN_SESSION.idFromName(verifiedToken.userId));
+	const stub = env.OBSIDIAN_SESSION.get(env.OBSIDIAN_SESSION.idFromName(sessionKey));
 	return stub.fetch(new Request(connectUrl, request));
 }
 
@@ -273,7 +271,7 @@ async function handleMcpRequest(request: Request, env: Env): Promise<Response> {
 		return mcpErrorResponse(request, null, -32000, "Method not allowed. Use POST for Streamable HTTP.", 405);
 	}
 
-	if (!isAuthorized(request, env)) {
+	if (!getMcpSessionKey(request, env)) {
 		return jsonResponse({ error: "Unauthorized" }, 401);
 	}
 
@@ -325,52 +323,52 @@ async function handleToolCall(request: Request, env: Env, params: unknown): Prom
 	}
 
 	const args = isRecord(params.arguments) ? params.arguments : {};
-	const userId = getPokeUserId(request);
+	const sessionKey = getMcpSessionKey(request, env);
+
+	if (!sessionKey) {
+		throw new Error("Unauthorized");
+	}
 
 	switch (params.name) {
 		case "obsidian_create_connection_token":
-			return toJsonToolResult(await createConnectionInstructions(request, env, userId));
+			return toJsonToolResult(await createConnectionInstructions(request, env));
 		case "obsidian_status":
-			return toJsonToolResult(await callSession(env, userId, "/status"));
+			return toJsonToolResult(await callSession(env, sessionKey, "/status"));
 		case "obsidian_list_files":
-			return toJsonToolResult(await callPlugin(env, userId, "list_files", {}));
+			return toJsonToolResult(await callPlugin(env, sessionKey, "list_files", {}));
 		case "obsidian_read_file":
-			return toJsonToolResult(await callPlugin(env, userId, "read_file", args));
+			return toJsonToolResult(await callPlugin(env, sessionKey, "read_file", args));
 		case "obsidian_search_vault":
-			return toJsonToolResult(await callPlugin(env, userId, "search_vault", args));
+			return toJsonToolResult(await callPlugin(env, sessionKey, "search_vault", args));
 		case "obsidian_write_file":
-			return toJsonToolResult(await callPlugin(env, userId, "write_file", args));
+			return toJsonToolResult(await callPlugin(env, sessionKey, "write_file", args));
 		default:
 			throw new Error(`Unknown tool: ${params.name}`);
 	}
 }
 
-async function createConnectionInstructions(request: Request, env: Env, userId: string): Promise<Record<string, unknown>> {
-	if (!env.CONNECTION_TOKEN_SECRET) {
-		throw new Error("CONNECTION_TOKEN_SECRET is required");
-	}
-
+async function createConnectionInstructions(request: Request, env: Env): Promise<Record<string, unknown>> {
 	const publicBaseUrl = (env.PUBLIC_BASE_URL || new URL(request.url).origin).replace(/\/+$/, "");
 
 	return {
-		connectionToken: await createConnectionToken(env.CONNECTION_TOKEN_SECRET, userId),
 		gatewayUrl: `${toWebSocketBaseUrl(publicBaseUrl)}/obsidian/sync`,
 		expiresAt: null,
 		instructions: [
 			"Install and enable the Poke Gateway plugin in Obsidian.",
 			"Open Obsidian Settings, then Poke Gateway.",
-			"Paste the Gateway URL and Connection token.",
+			"Copy the generated Connection token.",
+			"Paste that token into the Poke recipe's Add Key field.",
 			"Wait for the status to show Connected.",
 		],
 	};
 }
 
-async function callPlugin(env: Env, userId: string, action: string, params: Record<string, unknown>): Promise<Record<string, unknown>> {
-	return callSession(env, userId, "/rpc", { action, params });
+async function callPlugin(env: Env, sessionKey: string, action: string, params: Record<string, unknown>): Promise<Record<string, unknown>> {
+	return callSession(env, sessionKey, "/rpc", { action, params });
 }
 
-async function callSession(env: Env, userId: string, path: string, body?: Record<string, unknown>): Promise<Record<string, unknown>> {
-	const stub = env.OBSIDIAN_SESSION.get(env.OBSIDIAN_SESSION.idFromName(userId));
+async function callSession(env: Env, sessionKey: string, path: string, body?: Record<string, unknown>): Promise<Record<string, unknown>> {
+	const stub = env.OBSIDIAN_SESSION.get(env.OBSIDIAN_SESSION.idFromName(sessionKey));
 	const response = await stub.fetch(`https://session.local${path}`, {
 		method: body ? "POST" : "GET",
 		headers: body ? { "Content-Type": "application/json" } : undefined,
@@ -384,6 +382,24 @@ async function callSession(env: Env, userId: string, path: string, body?: Record
 	}
 
 	return isRecord(payload) ? payload : {};
+}
+
+async function getPluginSessionKey(env: Env, token: string): Promise<string | null> {
+	if (isVaultToken(token)) {
+		return tokenSessionKey(token);
+	}
+
+	if (!env.CONNECTION_TOKEN_SECRET) {
+		return null;
+	}
+
+	const verifiedToken = await verifyConnectionToken(env.CONNECTION_TOKEN_SECRET, token);
+
+	if (!verifiedToken) {
+		return null;
+	}
+
+	return userSessionKey(verifiedToken.userId);
 }
 
 async function createConnectionToken(secret: string, userId: string): Promise<string> {
@@ -477,12 +493,36 @@ function toJsonToolResult(value: unknown): Record<string, unknown> {
 	};
 }
 
-function isAuthorized(request: Request, env: Env): boolean {
-	if (!env.MCP_SERVER_TOKEN) {
-		return true;
+function getMcpSessionKey(request: Request, env: Env): string | null {
+	const bearerToken = getBearerToken(request);
+
+	if (bearerToken && env.MCP_SERVER_TOKEN && bearerToken === env.MCP_SERVER_TOKEN) {
+		return userSessionKey(getPokeUserId(request));
 	}
 
-	return request.headers.get("Authorization") === `Bearer ${env.MCP_SERVER_TOKEN}`;
+	if (bearerToken && isVaultToken(bearerToken)) {
+		return tokenSessionKey(bearerToken);
+	}
+
+	return null;
+}
+
+function getBearerToken(request: Request): string | null {
+	const authorization = request.headers.get("Authorization")?.trim() || "";
+	const match = authorization.match(/^Bearer\s+(.+)$/i);
+	return match?.[1]?.trim() || null;
+}
+
+function isVaultToken(token: string): boolean {
+	return VAULT_TOKEN_PATTERN.test(token);
+}
+
+function tokenSessionKey(token: string): string {
+	return `${VAULT_TOKEN_PREFIX}${token.slice(VAULT_TOKEN_PREFIX.length)}`;
+}
+
+function userSessionKey(userId: string): string {
+	return `poke_user_${userId}`;
 }
 
 function getPokeUserId(request: Request): string {

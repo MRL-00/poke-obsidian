@@ -12,21 +12,20 @@ No inbound ports, tunnels, local web servers, or router changes are required.
 
 ## Setup For Users
 
-You do **not** need to create a Poke integration, API key, MCP server, or gateway. That is already handled by the shared Poke Recipe.
+You do **not** need to host a server, run a tunnel, create a gateway, or make a Cloudflare account.
 
 1. Install and enable the `Poke Gateway` plugin in Obsidian.
-2. Add the Poke Gateway Recipe in Poke: `https://poke.com/r/uy--WqwhZ9P`.
-3. Ask Poke to set up Obsidian.
-4. Poke will generate a connection token for your Poke account.
-5. In Obsidian, open `Settings -> Poke Gateway`.
-6. Paste the connection token Poke gives you.
-7. Confirm the Gateway URL is:
+2. In Obsidian, open `Settings -> Poke Gateway`.
+3. Copy the generated `Connection token`.
+4. Add the Poke Gateway Recipe in Poke: `https://poke.com/r/uy--WqwhZ9P`.
+5. When Poke asks for the `Poke Obsidian` key, paste the Obsidian connection token.
+6. Confirm the Gateway URL in Obsidian is:
 
 ```text
 wss://obsidian.matt-nz.com/obsidian/sync
 ```
 
-8. Wait for the plugin status to show `Connected`.
+7. Wait for the plugin status to show `Connected`.
 
 After that, ask Poke to list, search, or read notes from your vault.
 
@@ -75,26 +74,25 @@ pnpm build
 
 Only the Recipe owner needs this section.
 
-Create one shared Poke MCP integration template:
+Create one Poke MCP integration template:
 
 ```text
-Name: Obsidian
+Name: Poke Obsidian
 Server URL: https://obsidian.matt-nz.com/mcp
-Authentication: Bearer/API key using the Cloudflare MCP_SERVER_TOKEN secret
+Authentication: API key required
 ```
 
-Then create a Poke Recipe that uses that integration as a shared integration.
+Then create a Poke Recipe that uses that integration.
 
 Recipe context should say:
 
 ```text
-When onboarding, call obsidian_create_connection_token.
 Tell the user to install and enable the Poke Gateway plugin in Obsidian.
-Give them the returned Gateway URL and Connection token.
-Tell them to paste both into Settings -> Poke Gateway and wait for Connected.
+Tell them to open Settings -> Poke Gateway and copy the generated Connection token.
+Tell them to paste that Connection token into the Poke Obsidian Add Key field.
 Then call obsidian_status before reading, searching, or writing vault files.
-Do not ask users to invent a token or copy one from GitHub.
+Do not ask users to invent a token, copy one from GitHub, or use the maintainer API key.
 Write access is off by default; only use writes after the user enables Allow writes.
 ```
 
-The user should never see or enter the shared MCP integration API key. They only receive their own per-user connection token from Poke during onboarding.
+Each user uses their own per-vault Obsidian connection token as the Poke integration key.
