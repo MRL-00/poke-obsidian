@@ -1,6 +1,7 @@
-import { App, Notice, Plugin, PluginSettingTab, Setting, TFile } from "obsidian";
+import { App, Notice, Plugin, PluginSettingTab, TFile, type Setting, type SettingDefinitionItem } from "obsidian";
 
 const DEFAULT_GATEWAY_URL = "wss://obsidian.matt-nz.com/obsidian/sync";
+const DEFAULT_VAULT_FOLDER = "Poke";
 const BASE_RECONNECT_DELAY_MS = 1_000;
 const MAX_RECONNECT_DELAY_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -12,6 +13,7 @@ type ConnectionState = "connected" | "connecting" | "disconnected";
 interface PokeObsidianSettings {
 	gatewayUrl: string;
 	connectionToken: string;
+	vaultFolder: string;
 	allowWrite: boolean;
 }
 
@@ -35,6 +37,7 @@ interface SearchMatch {
 const DEFAULT_SETTINGS: PokeObsidianSettings = {
 	gatewayUrl: DEFAULT_GATEWAY_URL,
 	connectionToken: "",
+	vaultFolder: DEFAULT_VAULT_FOLDER,
 	allowWrite: false,
 };
 
@@ -74,7 +77,23 @@ export default class PokeObsidianPlugin extends Plugin {
 	}
 
 	async loadSettings(): Promise<void> {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const savedSettings: unknown = await this.loadData();
+		const settingsRecord = isRecord(savedSettings) ? savedSettings : {};
+
+		this.settings = {
+			gatewayUrl: getOptionalString(settingsRecord, "gatewayUrl", DEFAULT_GATEWAY_URL),
+			connectionToken: getOptionalString(settingsRecord, "connectionToken", ""),
+			vaultFolder: getOptionalString(settingsRecord, "vaultFolder", DEFAULT_VAULT_FOLDER),
+			allowWrite:
+				typeof settingsRecord.allowWrite === "boolean" ? settingsRecord.allowWrite : DEFAULT_SETTINGS.allowWrite,
+		};
+
+		if (
+			this.settings.connectionToken &&
+			!Object.prototype.hasOwnProperty.call(settingsRecord, "vaultFolder")
+		) {
+			this.settings.vaultFolder = "";
+		}
 	}
 
 	async saveSettings(): Promise<void> {
@@ -99,6 +118,11 @@ export default class PokeObsidianPlugin extends Plugin {
 
 	async updateAllowWrite(allowWrite: boolean): Promise<void> {
 		this.settings.allowWrite = allowWrite;
+		await this.saveSettings();
+	}
+
+	async updateVaultFolder(vaultFolder: string): Promise<void> {
+		this.settings.vaultFolder = vaultFolder.trim();
 		await this.saveSettings();
 	}
 
@@ -292,15 +316,18 @@ export default class PokeObsidianPlugin extends Plugin {
 		}
 	}
 
-	private listFiles(): Record<string, unknown> {
+	private async listFiles(): Promise<Record<string, unknown>> {
 		return {
-			files: this.app.vault.getMarkdownFiles().map((file) => file.path),
+			files: await this.listMarkdownPaths(),
 		};
 	}
 
 	private async readFile(params: Record<string, unknown>): Promise<Record<string, unknown>> {
 		const path = getRequiredString(params, "path");
-		const file = this.getMarkdownFile(path);
+		const normalizedPath = this.normalizeMarkdownPath(path);
+		this.ensurePathInVaultFolder(normalizedPath);
+
+		const file = this.getMarkdownFile(normalizedPath);
 		const content = await this.app.vault.adapter.read(file.path);
 
 		return {
@@ -317,6 +344,7 @@ export default class PokeObsidianPlugin extends Plugin {
 		const path = getRequiredString(params, "path");
 		const content = getRequiredString(params, "content");
 		const normalizedPath = this.normalizeMarkdownPath(path);
+		this.ensurePathInVaultFolder(normalizedPath);
 
 		await this.ensureParentFolders(normalizedPath);
 		await this.app.vault.adapter.write(normalizedPath, content);
@@ -337,8 +365,8 @@ export default class PokeObsidianPlugin extends Plugin {
 		const normalizedQuery = query.toLocaleLowerCase();
 		const matches: SearchMatch[] = [];
 
-		for (const file of this.app.vault.getMarkdownFiles()) {
-			const content = await this.app.vault.adapter.read(file.path);
+		for (const path of await this.listMarkdownPaths()) {
+			const content = await this.app.vault.adapter.read(path);
 			const index = content.toLocaleLowerCase().indexOf(normalizedQuery);
 
 			if (index === -1) {
@@ -346,7 +374,7 @@ export default class PokeObsidianPlugin extends Plugin {
 			}
 
 			matches.push({
-				path: file.path,
+				path,
 				snippet: makeSnippet(content, index, query.length),
 			});
 		}
@@ -355,15 +383,14 @@ export default class PokeObsidianPlugin extends Plugin {
 	}
 
 	private getMarkdownFile(path: string): TFile {
-		const normalizedPath = this.normalizeMarkdownPath(path);
-		const file = this.app.vault.getAbstractFileByPath(normalizedPath);
+		const file = this.app.vault.getAbstractFileByPath(path);
 
 		if (!(file instanceof TFile)) {
-			throw new Error(`File not found: ${normalizedPath}`);
+			throw new Error(`File not found: ${path}`);
 		}
 
 		if (file.extension !== "md") {
-			throw new Error(`Only markdown files are supported: ${normalizedPath}`);
+			throw new Error(`Only markdown files are supported: ${path}`);
 		}
 
 		return file;
@@ -387,6 +414,40 @@ export default class PokeObsidianPlugin extends Plugin {
 		}
 
 		return parts.join("/");
+	}
+
+	private getVaultFolder(): string {
+		return normalizeVaultFolder(this.settings.vaultFolder);
+	}
+
+	private ensurePathInVaultFolder(path: string): void {
+		const folder = this.getVaultFolder();
+
+		if (folder && !path.startsWith(`${folder}/`)) {
+			throw new Error(`Path is outside the configured vault access folder: ${folder}`);
+		}
+	}
+
+	private async listMarkdownPaths(): Promise<string[]> {
+		const folder = this.getVaultFolder();
+
+		if (folder && !(await this.app.vault.adapter.exists(folder))) {
+			return [];
+		}
+
+		const paths = await this.listMarkdownPathsInFolder(folder);
+		return paths.sort((a, b) => a.localeCompare(b));
+	}
+
+	private async listMarkdownPathsInFolder(folder: string): Promise<string[]> {
+		const listing = await this.app.vault.adapter.list(folder);
+		const paths = listing.files.filter(isMarkdownPath);
+
+		for (const childFolder of listing.folders) {
+			paths.push(...(await this.listMarkdownPathsInFolder(childFolder)));
+		}
+
+		return paths;
 	}
 
 	private async ensureParentFolders(filePath: string): Promise<void> {
@@ -458,27 +519,68 @@ class PokeObsidianSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	display(): void {
-		const { containerEl } = this;
-		containerEl.empty();
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		return [
+			{
+				type: "group",
+				heading: "Poke Gateway",
+				items: [
+					{
+						name: "Gateway URL",
+						desc: "WebSocket endpoint used to connect this vault to Poke.",
+						render: (setting) => this.renderGatewayUrlSetting(setting),
+					},
+					{
+						name: "Vault access folder",
+						desc: "Limit Poke to markdown files in this folder. Leave blank to allow all markdown files.",
+						render: (setting) => this.renderVaultFolderSetting(setting),
+					},
+					{
+						name: "Connection token",
+						desc: "Paste this token into Poke's Add Key field for the Obsidian recipe.",
+						render: (setting) => this.renderConnectionTokenSetting(setting),
+					},
+					{
+						name: "Allow writes",
+						desc: "Allow Poke to create or overwrite markdown files in this vault.",
+						render: (setting) => this.renderAllowWriteSetting(setting),
+					},
+					{
+						name: "Connection status",
+						desc: "Current gateway connection state.",
+						render: (setting) => this.renderConnectionStatusSetting(setting),
+					},
+				],
+			},
+		];
+	}
 
-		containerEl.createEl("h2", { text: "Poke Gateway" });
+	private renderGatewayUrlSetting(setting: Setting): void {
+		setting.addText((text) => {
+			text
+				.setPlaceholder(DEFAULT_GATEWAY_URL)
+				.setValue(this.plugin.settings.gatewayUrl || DEFAULT_GATEWAY_URL)
+				.onChange(async (value) => {
+					await this.plugin.updateGatewayUrl(value);
+				});
+		});
+	}
 
-		new Setting(containerEl)
-			.setName("Gateway URL")
-			.setDesc("WebSocket endpoint used to connect this vault to Poke.")
-			.addText((text) => {
-				text
-					.setPlaceholder(DEFAULT_GATEWAY_URL)
-					.setValue(this.plugin.settings.gatewayUrl || DEFAULT_GATEWAY_URL)
-					.onChange(async (value) => {
-						await this.plugin.updateGatewayUrl(value);
-					});
-			});
+	private renderVaultFolderSetting(setting: Setting): void {
+		setting.addText((text) => {
+			text
+				.setPlaceholder(DEFAULT_VAULT_FOLDER)
+				.setValue(this.plugin.settings.vaultFolder)
+				.onChange(async (value) => {
+					await this.plugin.updateVaultFolder(value);
+				});
+		});
+	}
 
-		new Setting(containerEl)
-			.setName("Connection token")
-			.setDesc("Paste this token into Poke's Add Key field for the Obsidian recipe.")
+	private renderConnectionTokenSetting(setting: Setting): void {
+		let tokenInput: HTMLInputElement | null = null;
+
+		setting
 			.addText((text) => {
 				text
 					.setPlaceholder("Paste token")
@@ -488,14 +590,21 @@ class PokeObsidianSettingTab extends PluginSettingTab {
 					});
 
 				text.inputEl.type = "password";
+				tokenInput = text.inputEl;
 			})
 			.addExtraButton((button) => {
 				button
-					.setIcon("copy")
-					.setTooltip("Copy token")
-					.onClick(async () => {
-						await navigator.clipboard.writeText(this.plugin.settings.connectionToken);
-						new Notice("Poke Gateway token copied");
+					.setIcon("text-cursor-input")
+					.setTooltip("Reveal and select token")
+					.onClick(() => {
+						if (!tokenInput) {
+							return;
+						}
+
+						tokenInput.type = "text";
+						tokenInput.focus();
+						tokenInput.select();
+						new Notice("Poke Gateway token selected");
 					});
 			})
 			.addExtraButton((button) => {
@@ -504,36 +613,34 @@ class PokeObsidianSettingTab extends PluginSettingTab {
 					.setTooltip("Generate new token")
 					.onClick(async () => {
 						await this.plugin.updateConnectionToken(generateConnectionToken());
-						this.display();
+						this.update();
 						new Notice("Generated a new Poke Gateway token");
 					});
 			});
+	}
 
-		new Setting(containerEl)
-			.setName("Allow writes")
-			.setDesc("Allow Poke to create or overwrite markdown files in this vault.")
-			.addToggle((toggle) => {
-				toggle
-					.setValue(this.plugin.settings.allowWrite)
-					.onChange(async (value) => {
-						await this.plugin.updateAllowWrite(value);
-					});
-			});
+	private renderAllowWriteSetting(setting: Setting): void {
+		setting.addToggle((toggle) => {
+			toggle
+				.setValue(this.plugin.settings.allowWrite)
+				.onChange(async (value) => {
+					await this.plugin.updateAllowWrite(value);
+				});
+		});
+	}
 
-		const statusSetting = new Setting(containerEl)
-			.setName("Connection status")
-			.setDesc("Current gateway connection state.")
-			.addExtraButton((button) => {
-				button
-					.setIcon("refresh-cw")
-					.setTooltip("Reconnect")
-					.onClick(() => {
-						this.plugin.reconnectNow();
-						new Notice("Reconnecting Poke Gateway");
-					});
-			});
+	private renderConnectionStatusSetting(setting: Setting): void {
+		setting.addExtraButton((button) => {
+			button
+				.setIcon("refresh-cw")
+				.setTooltip("Reconnect")
+				.onClick(() => {
+					this.plugin.reconnectNow();
+					new Notice("Reconnecting Poke Gateway");
+				});
+		});
 
-		this.statusEl = statusSetting.controlEl.createSpan();
+		this.statusEl = setting.controlEl.createSpan();
 		this.statusEl.addClass("poke-status");
 		this.updateStatus(this.plugin.getConnectionState());
 	}
@@ -559,8 +666,33 @@ function getRequiredString(params: Record<string, unknown>, key: string): string
 	return value;
 }
 
+function getOptionalString(params: Record<string, unknown>, key: string, fallback: string): string {
+	const value = params[key];
+	return typeof value === "string" ? value : fallback;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isMarkdownPath(path: string): boolean {
+	return path.toLocaleLowerCase().endsWith(".md");
+}
+
+function normalizeVaultFolder(path: string): string {
+	const normalizedPath = path.trim().replace(/^\/+|\/+$/g, "");
+
+	if (!normalizedPath) {
+		return "";
+	}
+
+	const parts = normalizedPath.split("/").filter(Boolean);
+
+	if (parts.includes("..") || parts.some((part) => part === ".")) {
+		throw new Error("Vault access folder cannot contain parent or current-directory segments");
+	}
+
+	return parts.join("/");
 }
 
 function makeSnippet(content: string, index: number, matchLength: number): string {

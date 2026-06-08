@@ -47,6 +47,8 @@ wss://obsidian.matt-nz.com/obsidian/sync
 
 After that, ask Poke to list, search, or read notes from your vault.
 
+By default, new installs limit Poke to markdown files in the `Poke` folder. To use a different folder, set `Vault access folder` in the plugin settings; leave it blank only if you want to allow all markdown files in the vault. List, search, read, and write requests are limited to the configured folder.
+
 Write access is off by default. Turn on `Allow writes` only if you want Poke to create or overwrite markdown files in the vault.
 
 ## What Poke Can Do
@@ -59,6 +61,18 @@ The connected gateway supports:
 - `write_file`
 
 Only markdown files are supported. Write requests are rejected unless `Allow writes` is enabled in Obsidian.
+
+The plugin does not read from or write to the system clipboard. The settings screen can reveal and select the connection token so you can copy it yourself.
+
+## Verifying Release Assets
+
+Release assets are built and attested by GitHub Actions. After downloading a release asset, you can verify its provenance with the GitHub CLI:
+
+```bash
+gh attestation verify manifest.json -R MRL-00/poke-obsidian
+gh attestation verify main.js -R MRL-00/poke-obsidian
+gh attestation verify styles.css -R MRL-00/poke-obsidian
+```
 
 ## Install Manually
 
