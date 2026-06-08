@@ -11,7 +11,7 @@ import { SessionStore } from "./sessionStore.js";
 const config = loadConfig();
 const store = new SessionStore(config.pairingTokenTtlMs);
 const rpc = new PluginRpc(config.pluginRequestTimeoutMs);
-const app = createMcpExpressApp();
+const app = createMcpExpressApp({ host: "0.0.0.0" });
 const httpServer = http.createServer(app);
 const webSocketServer = new WebSocketServer({
 	server: httpServer,
