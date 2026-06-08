@@ -88,9 +88,10 @@ webSocketServer.on("connection", (socket, request) => {
 	const token = url.searchParams.get("token") ?? "";
 	const pluginId = url.searchParams.get("plugin") ?? "unknown";
 	const version = url.searchParams.get("version") ?? "unknown";
-	const pairingToken = store.consumePairingToken(token);
+	const pairingToken = store.getPairingToken(token);
 
 	if (!pairingToken) {
+		console.warn(`Rejected Obsidian plugin connection: invalid or expired token (${pluginId}@${version})`);
 		socket.close(4001, "Invalid or expired pairing token");
 		return;
 	}
@@ -99,9 +100,11 @@ webSocketServer.on("connection", (socket, request) => {
 		pluginId,
 		version,
 	});
+	console.log(`Obsidian plugin connected: user=${pairingToken.userId} plugin=${pluginId} version=${version}`);
 
 	socket.on("close", () => {
 		store.removeSession(pairingToken.userId, socket);
+		console.log(`Obsidian plugin disconnected: user=${pairingToken.userId}`);
 	});
 });
 

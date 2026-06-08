@@ -26,7 +26,7 @@ export class SessionStore {
 		return token;
 	}
 
-	consumePairingToken(token: string): PendingPairingToken | null {
+	getPairingToken(token: string): PendingPairingToken | null {
 		this.pruneExpiredTokens();
 
 		const pairingToken = this.pairingTokens.get(token);
@@ -34,8 +34,6 @@ export class SessionStore {
 		if (!pairingToken) {
 			return null;
 		}
-
-		this.pairingTokens.delete(token);
 		return pairingToken;
 	}
 
