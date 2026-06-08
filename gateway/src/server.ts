@@ -149,7 +149,7 @@ webSocketServer.on("connection", (socket, request) => {
 });
 
 httpServer.listen(config.port, () => {
-	console.log(`Poke-Obsidian Gateway listening on ${config.publicBaseUrl}`);
+	console.log(`Poke Gateway listening on ${config.publicBaseUrl}`);
 	console.log(`MCP endpoint: ${config.publicBaseUrl}/mcp`);
 	console.log(`Plugin WebSocket endpoint: ${toWebSocketBaseUrl(config.publicBaseUrl)}/obsidian/sync`);
 });

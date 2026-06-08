@@ -1,7 +1,7 @@
 {
 	"name": "poke-obsidian-gateway",
 	"version": "0.1.0",
-	"description": "MCP and WebSocket gateway for Poke-Obsidian.",
+	"description": "MCP and WebSocket gateway for Poke Gateway.",
 	"type": "module",
 	"main": "dist/server.js",
 	"scripts": {

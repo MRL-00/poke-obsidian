@@ -1,4 +1,4 @@
-# Poke-Obsidian Development Gateway
+# Poke Gateway Development Gateway
 
 The gateway exposes:
 
@@ -31,7 +31,7 @@ If you set `MCP_SERVER_TOKEN`, configure the same API key in Poke so requests in
 Authorization: Bearer <shared-secret-configured-in-poke>
 ```
 
-The Recipe should instruct Poke to call `obsidian_create_connection_token` during onboarding, then tell the user to paste the returned `gatewayUrl` and `connectionToken` into Settings -> Poke-Obsidian.
+The Recipe should instruct Poke to call `obsidian_create_connection_token` during onboarding, then tell the user to paste the returned `gatewayUrl` and `connectionToken` into Settings -> Poke Gateway.
 
 ## Local Dev
 
@@ -70,7 +70,7 @@ http://localhost:3001/mcp
 For local Poke recipe testing:
 
 ```bash
-npx poke@latest tunnel http://localhost:3001/mcp -n "Poke-Obsidian Dev Gateway" --recipe
+npx poke@latest tunnel http://localhost:3001/mcp -n "Poke Gateway Dev Gateway" --recipe
 ```
 
 ## Auth

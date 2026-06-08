@@ -1,8 +1,8 @@
-# Poke-Obsidian
+# Poke Gateway
 
 Connect your Obsidian vault to Poke so Poke can search, read, and, if you allow it, write markdown notes.
 
-The plugin makes an outbound WebSocket connection to the hosted Poke-Obsidian gateway:
+The plugin makes an outbound WebSocket connection to the hosted Poke gateway:
 
 ```text
 wss://obsidian.matt-nz.com/obsidian/sync
@@ -14,11 +14,11 @@ No inbound ports, tunnels, local web servers, or router changes are required.
 
 You do **not** need to create a Poke integration, API key, MCP server, or gateway. That is already handled by the shared Poke Recipe.
 
-1. Install and enable the `Poke-Obsidian` plugin in Obsidian.
-2. Add the Obsidian Recipe in Poke: `https://poke.com/r/uy--WqwhZ9P`.
+1. Install and enable the `Poke Gateway` plugin in Obsidian.
+2. Add the Poke Gateway Recipe in Poke: `https://poke.com/r/uy--WqwhZ9P`.
 3. Ask Poke to set up Obsidian.
 4. Poke will generate a connection token for your Poke account.
-5. In Obsidian, open `Settings -> Poke-Obsidian`.
+5. In Obsidian, open `Settings -> Poke Gateway`.
 6. Paste the connection token Poke gives you.
 7. Confirm the Gateway URL is:
 
@@ -56,11 +56,11 @@ styles.css
 For example:
 
 ```bash
-mkdir -p "/path/to/Vault/.obsidian/plugins/poke-obsidian"
-cp manifest.json main.js styles.css "/path/to/Vault/.obsidian/plugins/poke-obsidian/"
+mkdir -p "/path/to/Vault/.obsidian/plugins/poke-gateway"
+cp manifest.json main.js styles.css "/path/to/Vault/.obsidian/plugins/poke-gateway/"
 ```
 
-Then enable `Poke-Obsidian` in Obsidian community plugin settings.
+Then enable `Poke Gateway` in Obsidian community plugin settings.
 
 ## Build
 
@@ -89,9 +89,9 @@ Recipe context should say:
 
 ```text
 When onboarding, call obsidian_create_connection_token.
-Tell the user to install and enable the Poke-Obsidian plugin in Obsidian.
+Tell the user to install and enable the Poke Gateway plugin in Obsidian.
 Give them the returned Gateway URL and Connection token.
-Tell them to paste both into Settings -> Poke-Obsidian and wait for Connected.
+Tell them to paste both into Settings -> Poke Gateway and wait for Connected.
 Then call obsidian_status before reading, searching, or writing vault files.
 Do not ask users to invent a token or copy one from GitHub.
 Write access is off by default; only use writes after the user enables Allow writes.

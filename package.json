@@ -1,5 +1,5 @@
 {
-	"name": "poke-obsidian",
+	"name": "poke-gateway",
 	"version": "0.1.0",
 	"description": "Obsidian plugin that connects a local vault to Poke over an outbound WebSocket.",
 	"main": "main.js",

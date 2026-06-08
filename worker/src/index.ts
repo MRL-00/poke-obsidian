@@ -31,7 +31,7 @@ const TOKEN_PREFIX = "pkobs";
 const tools = [
 	{
 		name: "obsidian_create_connection_token",
-		description: "Create a connection token and gateway URL for pairing the current Poke user with the Poke-Obsidian plugin.",
+		description: "Create a connection token and gateway URL for pairing the current Poke user with the Poke Gateway plugin.",
 		inputSchema: { type: "object", properties: {}, additionalProperties: false },
 	},
 	{
@@ -190,7 +190,7 @@ export class ObsidianSession {
 		const server = pair[1];
 
 		for (const socket of this.state.getWebSockets()) {
-			socket.close(4000, "Replaced by a newer Poke-Obsidian connection");
+			socket.close(4000, "Replaced by a newer Poke Gateway connection");
 		}
 
 		this.state.acceptWebSocket(server);
@@ -357,8 +357,8 @@ async function createConnectionInstructions(request: Request, env: Env, userId: 
 		gatewayUrl: `${toWebSocketBaseUrl(publicBaseUrl)}/obsidian/sync`,
 		expiresAt: null,
 		instructions: [
-			"Install and enable the Poke-Obsidian plugin in Obsidian.",
-			"Open Obsidian Settings, then Poke-Obsidian.",
+			"Install and enable the Poke Gateway plugin in Obsidian.",
+			"Open Obsidian Settings, then Poke Gateway.",
 			"Paste the Gateway URL and Connection token.",
 			"Wait for the status to show Connected.",
 		],

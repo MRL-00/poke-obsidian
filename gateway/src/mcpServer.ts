@@ -22,7 +22,7 @@ export function createPokeObsidianMcpServer(store: SessionStore, rpc: PluginRpc,
 	server.registerTool(
 		"obsidian_create_connection_token",
 		{
-			description: "Create a connection token and gateway URL for pairing the current Poke user with the Poke-Obsidian plugin.",
+			description: "Create a connection token and gateway URL for pairing the current Poke user with the Poke Gateway plugin.",
 			inputSchema: {},
 		},
 		async () => {
@@ -33,8 +33,8 @@ export function createPokeObsidianMcpServer(store: SessionStore, rpc: PluginRpc,
 				gatewayUrl: context.pluginWebSocketUrl,
 				expiresAt: connection.expiresAt,
 				instructions: [
-					"Install and enable the Poke-Obsidian community plugin in Obsidian.",
-					"Open Obsidian Settings, then Poke-Obsidian.",
+					"Install and enable the Poke Gateway community plugin in Obsidian.",
+					"Open Obsidian Settings, then Poke Gateway.",
 					"Paste the Gateway URL and Connection token.",
 					"Wait for the status to show Connected.",
 				],

@@ -1,6 +1,6 @@
-# Poke-Obsidian Cloudflare Worker
+# Poke Gateway Cloudflare Worker
 
-This is the production gateway target for Poke-Obsidian.
+This is the production gateway target for Poke Gateway.
 
 It runs as:
 
@@ -40,11 +40,11 @@ URL: https://obsidian.matt-nz.com/mcp
 API key: <same value as MCP_SERVER_TOKEN>
 ```
 
-The Recipe onboarding should tell Poke to call `obsidian_create_connection_token`. Poke should give the returned `gatewayUrl` and `connectionToken` to the user, and the user pastes those into Settings -> Poke-Obsidian.
+The Recipe onboarding should tell Poke to call `obsidian_create_connection_token`. Poke should give the returned `gatewayUrl` and `connectionToken` to the user, and the user pastes those into Settings -> Poke Gateway.
 
 ## User Flow
 
-1. User installs and enables the Poke-Obsidian plugin in Obsidian.
+1. User installs and enables the Poke Gateway plugin in Obsidian.
 2. User adds the Poke Recipe.
 3. Poke calls `obsidian_create_connection_token`.
 4. User pastes the returned Gateway URL and Connection token into the plugin settings.

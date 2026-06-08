@@ -134,7 +134,7 @@ export default class PokeObsidianPlugin extends Plugin {
 		}
 
 		try {
-			console.log(`Poke-Obsidian connecting to ${redactToken(url)}`);
+			console.log(`Poke Gateway connecting to ${redactToken(url)}`);
 			this.socket = new WebSocket(url.toString());
 		} catch (error) {
 			this.handleConnectionError(error);
@@ -143,7 +143,7 @@ export default class PokeObsidianPlugin extends Plugin {
 		}
 
 		this.socket.onopen = () => {
-			console.log("Poke-Obsidian connected");
+			console.log("Poke Gateway connected");
 			this.reconnectAttempts = 0;
 			this.setConnectionState("connected");
 		};
@@ -157,7 +157,7 @@ export default class PokeObsidianPlugin extends Plugin {
 		};
 
 		this.socket.onclose = (event) => {
-			console.log(`Poke-Obsidian disconnected: code=${event.code} reason=${event.reason || "(none)"}`);
+			console.log(`Poke Gateway disconnected: code=${event.code} reason=${event.reason || "(none)"}`);
 			this.socket = null;
 
 			if (this.unloadRequested) {
@@ -307,7 +307,7 @@ export default class PokeObsidianPlugin extends Plugin {
 
 	private async writeFile(params: Record<string, unknown>): Promise<Record<string, unknown>> {
 		if (!this.settings.allowWrite) {
-			throw new Error("Write access is disabled in Poke-Obsidian settings");
+			throw new Error("Write access is disabled in Poke Gateway settings");
 		}
 
 		const path = getRequiredString(params, "path");
@@ -404,12 +404,12 @@ export default class PokeObsidianPlugin extends Plugin {
 		try {
 			url = new URL(this.settings.gatewayUrl || DEFAULT_GATEWAY_URL);
 		} catch {
-			new Notice("Invalid Poke-Obsidian gateway URL");
+			new Notice("Invalid Poke Gateway URL");
 			return null;
 		}
 
 		if (url.protocol !== "ws:" && url.protocol !== "wss:") {
-			new Notice("Poke-Obsidian gateway URL must start with ws:// or wss://");
+			new Notice("Poke Gateway URL must start with ws:// or wss://");
 			return null;
 		}
 
@@ -441,7 +441,7 @@ export default class PokeObsidianPlugin extends Plugin {
 	}
 
 	private handleConnectionError(error: unknown): void {
-		console.error("Poke-Obsidian connection error", error);
+		console.error("Poke Gateway connection error", error);
 	}
 }
 
@@ -458,7 +458,7 @@ class PokeObsidianSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "Poke-Obsidian" });
+		containerEl.createEl("h2", { text: "Poke Gateway" });
 
 		new Setting(containerEl)
 			.setName("Gateway URL")
@@ -506,7 +506,7 @@ class PokeObsidianSettingTab extends PluginSettingTab {
 					.setTooltip("Reconnect")
 					.onClick(() => {
 						this.plugin.reconnectNow();
-						new Notice("Reconnecting Poke-Obsidian");
+						new Notice("Reconnecting Poke Gateway");
 					});
 			});
 

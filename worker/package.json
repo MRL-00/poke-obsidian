@@ -1,7 +1,7 @@
 {
 	"name": "poke-obsidian-gateway-worker",
 	"version": "0.1.0",
-	"description": "Cloudflare Worker gateway for Poke-Obsidian.",
+	"description": "Cloudflare Worker gateway for Poke Gateway.",
 	"type": "module",
 	"scripts": {
 		"deploy": "wrangler deploy",

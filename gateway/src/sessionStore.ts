@@ -41,7 +41,7 @@ export class SessionStore {
 		const existingSession = this.sessionsByUserId.get(userId);
 
 		if (existingSession && existingSession.socket !== socket) {
-			existingSession.socket.close(4000, "Replaced by a newer Poke-Obsidian connection");
+			existingSession.socket.close(4000, "Replaced by a newer Poke Gateway connection");
 		}
 
 		this.sessionsByUserId.set(userId, {
