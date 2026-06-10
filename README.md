@@ -16,7 +16,35 @@ This repository contains only the Obsidian plugin source and release assets. The
 
 You do **not** need to host a server, run a tunnel, create a gateway, or make a Cloudflare account.
 
-The plugin is not yet listed in Obsidian's community plugin directory. Until it is approved there, install it manually from the GitHub release:
+### Install From Obsidian
+
+1. In Obsidian, open `Settings -> Community plugins`.
+2. If community plugins are not enabled yet, turn them on first.
+3. Select `Browse`.
+4. Search for `Poke Gateway`.
+5. Select `Poke Gateway`, then install and enable it.
+
+![Poke Gateway in the Obsidian community plugins browser](docs/obsidian-community-plugin-search.png)
+
+After enabling the plugin:
+
+1. Open `Settings -> Poke Gateway`.
+2. Copy the generated `Connection token`.
+3. Add the Poke Gateway Recipe in Poke: `https://poke.com/r/uy--WqwhZ9P`.
+4. When Poke asks for the `Poke Obsidian` key, paste the Obsidian connection token.
+5. Confirm the Gateway URL in Obsidian is:
+
+```text
+wss://obsidian.matt-nz.com/obsidian/sync
+```
+
+6. Wait for the plugin status to show `Connected`.
+
+After that, ask Poke to list, search, or read notes from your vault.
+
+### Manual Install Fallback
+
+If the plugin does not appear in Obsidian's community plugin browser, install it manually from the GitHub release:
 
 1. Download the latest release files from `https://github.com/MRL-00/poke-obsidian/releases`:
 
@@ -35,19 +63,7 @@ styles.css
 3. Move the three downloaded files into that folder.
 4. Restart Obsidian or reload plugins.
 5. In Obsidian, open `Settings -> Community plugins` and enable `Poke Gateway`.
-6. Open `Settings -> Poke Gateway`.
-7. Copy the generated `Connection token`.
-8. Add the Poke Gateway Recipe in Poke: `https://poke.com/r/uy--WqwhZ9P`.
-9. When Poke asks for the `Poke Obsidian` key, paste the Obsidian connection token.
-10. Confirm the Gateway URL in Obsidian is:
-
-```text
-wss://obsidian.matt-nz.com/obsidian/sync
-```
-
-11. Wait for the plugin status to show `Connected`.
-
-After that, ask Poke to list, search, or read notes from your vault.
+6. Follow the setup steps above from `Settings -> Poke Gateway`.
 
 By default, new installs limit Poke to markdown files in the `Poke` folder. To use a different folder, set `Vault access folder` in the plugin settings; leave it blank only if you want to allow all markdown files in the vault. List, search, read, and write requests are limited to the configured folder.
 
@@ -123,10 +139,11 @@ Then create a Poke Recipe that uses that integration.
 Recipe context should say:
 
 ```text
-Tell the user that the Poke Gateway Obsidian plugin is not yet in Obsidian's community plugin directory.
-Tell them to install it manually from the latest GitHub release at https://github.com/MRL-00/poke-obsidian/releases by downloading manifest.json, main.js, and styles.css.
-Tell them to create .obsidian/plugins/poke-gateway inside their vault and move those three files into that folder.
-Tell them to restart Obsidian or reload plugins, then enable Poke Gateway from Settings -> Community plugins.
+Tell the user to open Obsidian Settings -> Community plugins.
+Tell them to enable community plugins first if they have not already done so.
+Tell them to browse community plugins, search for Poke Gateway, then install and enable it.
+If Poke Gateway does not appear in the community plugin browser, tell them to install it manually from the latest GitHub release at https://github.com/MRL-00/poke-obsidian/releases by downloading manifest.json, main.js, and styles.css.
+For manual installs, tell them to create .obsidian/plugins/poke-gateway inside their vault, move those three files into that folder, restart Obsidian or reload plugins, then enable Poke Gateway from Settings -> Community plugins.
 Tell them to open Settings -> Poke Gateway and copy the generated Connection token.
 Tell them to paste that Connection token into the Poke Obsidian Add Key field.
 Then call obsidian_status before reading, searching, or writing vault files.
