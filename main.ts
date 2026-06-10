@@ -523,7 +523,7 @@ class PokeObsidianSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "Poke Gateway" });
+		new Setting(containerEl).setName("Poke Gateway").setHeading();
 
 		this.renderGatewayUrlSetting(
 			new Setting(containerEl)
@@ -609,8 +609,11 @@ class PokeObsidianSettingTab extends PluginSettingTab {
 					.setIcon("refresh-cw")
 					.setTooltip("Generate new token")
 					.onClick(async () => {
-						await this.plugin.updateConnectionToken(generateConnectionToken());
-						this.display();
+						const token = generateConnectionToken();
+						await this.plugin.updateConnectionToken(token);
+						if (tokenInput) {
+							tokenInput.value = token;
+						}
 						new Notice("Generated a new Poke Gateway token");
 					});
 			});
