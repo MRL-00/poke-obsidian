@@ -1,7 +1,7 @@
 {
 	"id": "poke-gateway",
 	"name": "Poke Gateway",
-	"version": "0.1.5",
+	"version": "0.1.6",
 	"minAppVersion": "1.12.7",
 	"description": "Connects this vault to Poke over a secure outbound WebSocket.",
 	"author": "Poke",

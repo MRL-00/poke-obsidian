@@ -523,7 +523,7 @@ class PokeObsidianSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		new Setting(containerEl).setName("Poke Gateway").setHeading();
+		new Setting(containerEl).setName("Connection").setHeading();
 
 		this.renderGatewayUrlSetting(
 			new Setting(containerEl)
