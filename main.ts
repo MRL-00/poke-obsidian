@@ -1,4 +1,4 @@
-import { App, Notice, Plugin, PluginSettingTab, TFile, type Setting, type SettingDefinitionItem } from "obsidian";
+import { App, Notice, Plugin, PluginSettingTab, Setting, TFile } from "obsidian";
 
 const DEFAULT_GATEWAY_URL = "wss://obsidian.matt-nz.com/obsidian/sync";
 const DEFAULT_VAULT_FOLDER = "Poke";
@@ -519,40 +519,37 @@ class PokeObsidianSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	getSettingDefinitions(): SettingDefinitionItem[] {
-		return [
-			{
-				type: "group",
-				heading: "Poke Gateway",
-				items: [
-					{
-						name: "Gateway URL",
-						desc: "WebSocket endpoint used to connect this vault to Poke.",
-						render: (setting) => this.renderGatewayUrlSetting(setting),
-					},
-					{
-						name: "Vault access folder",
-						desc: "Limit Poke to markdown files in this folder. Leave blank to allow all markdown files.",
-						render: (setting) => this.renderVaultFolderSetting(setting),
-					},
-					{
-						name: "Connection token",
-						desc: "Paste this token into Poke's Add Key field for the Obsidian recipe.",
-						render: (setting) => this.renderConnectionTokenSetting(setting),
-					},
-					{
-						name: "Allow writes",
-						desc: "Allow Poke to create or overwrite markdown files in this vault.",
-						render: (setting) => this.renderAllowWriteSetting(setting),
-					},
-					{
-						name: "Connection status",
-						desc: "Current gateway connection state.",
-						render: (setting) => this.renderConnectionStatusSetting(setting),
-					},
-				],
-			},
-		];
+	display(): void {
+		const { containerEl } = this;
+		containerEl.empty();
+
+		containerEl.createEl("h2", { text: "Poke Gateway" });
+
+		this.renderGatewayUrlSetting(
+			new Setting(containerEl)
+				.setName("Gateway URL")
+				.setDesc("WebSocket endpoint used to connect this vault to Poke."),
+		);
+		this.renderVaultFolderSetting(
+			new Setting(containerEl)
+				.setName("Vault access folder")
+				.setDesc("Limit Poke to markdown files in this folder. Leave blank to allow all markdown files."),
+		);
+		this.renderConnectionTokenSetting(
+			new Setting(containerEl)
+				.setName("Connection token")
+				.setDesc("Paste this token into Poke's Add Key field for the Obsidian recipe."),
+		);
+		this.renderAllowWriteSetting(
+			new Setting(containerEl)
+				.setName("Allow writes")
+				.setDesc("Allow Poke to create or overwrite markdown files in this vault."),
+		);
+		this.renderConnectionStatusSetting(
+			new Setting(containerEl)
+				.setName("Connection status")
+				.setDesc("Current gateway connection state."),
+		);
 	}
 
 	private renderGatewayUrlSetting(setting: Setting): void {
@@ -613,7 +610,7 @@ class PokeObsidianSettingTab extends PluginSettingTab {
 					.setTooltip("Generate new token")
 					.onClick(async () => {
 						await this.plugin.updateConnectionToken(generateConnectionToken());
-						this.update();
+						this.display();
 						new Notice("Generated a new Poke Gateway token");
 					});
 			});
